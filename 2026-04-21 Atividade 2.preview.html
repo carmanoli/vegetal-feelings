@@ -1,0 +1,775 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<base href="file:///C:/Users/CarlosManuelOliveira/OneDrive%20-%20Universidade%20Aberta/Desktop/VegetalFeeligns(eng)/">
+<title>2026-04-21 Atividade 2.md</title>
+
+<style>
+@page {
+    size: A4;
+    margin: 18mm 25mm 18mm 25mm;
+
+    @top-center {
+        content: "Vegetal Feelings";
+        font-family: Segoe UI, Arial, sans-serif;
+        font-size: 11pt;
+        font-weight: 600;
+        border-bottom: 1px solid #777;
+        margin-bottom: 10px;
+        white-space: nowrap;
+    }
+
+    @bottom-right {
+        content: "Página " counter(page) " / " counter(pages);
+        font-family: Segoe UI, Arial, sans-serif;
+        font-size: 10pt;
+        border-top: 1px solid #777;
+        margin-top: 10px;
+    }
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Segoe UI, Arial, sans-serif;
+    line-height: 1.5;
+    font-size: 11pt;
+    color: #111;
+    --print-image-max-height: 210mm;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid-page;
+}
+
+p, ul, ol, table, pre, blockquote, figure {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.cover {
+    page-break-after: always;
+    break-after: page;
+}
+
+.toc {
+    page-break-after: always;
+    break-after: page;
+}
+
+.toc h2 {
+    margin-top: 0;
+}
+
+.toc ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.toc li {
+    margin: 0 0 6px 0;
+}
+
+.toc li.h3 {
+    margin-left: 20px;
+}
+
+.toc li.h4 {
+    margin-left: 40px;
+}
+
+.toc a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.content {
+    margin: 0;
+    padding: 0;
+}
+
+.section-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.section-block + .section-block {
+    page-break-before: always;
+    break-before: page;
+}
+
+.section-block > h2:first-child {
+    margin-top: 0;
+}
+
+.heading-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.image-block {
+    margin: 1em 0 1.4em 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.image-block.with-context {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.image-block > p {
+    margin: 0 0 6px 0;
+    page-break-after: avoid;
+}
+
+.image-block > figure {
+    margin: 0;
+    text-align: center;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.image-block img {
+    max-width: 100%;
+    max-height: var(--print-image-max-height);
+    width: auto;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
+.image-block figcaption {
+    margin-top: 6px;
+    font-size: 10pt;
+    color: #333;
+}
+
+pre {
+    background: #f4f4f4;
+    padding: 10px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    position: relative;
+}
+
+code {
+    font-family: Consolas, monospace;
+}
+
+.run-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #333;
+    color: #fff;
+    border: none;
+    font-size: 11px;
+    padding: 3px 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0.7;
+}
+
+.run-btn:hover {
+    opacity: 1;
+    background: #000;
+}
+</style>
+
+<script>
+function getCodeText(pre)
+{
+    const code = pre.querySelector('code');
+    if (code) return code.innerText;
+    return pre.innerText;
+}
+
+function sendCode(text)
+{
+    if (!text || !text.trim()) return;
+
+    chrome.webview.postMessage({
+        type: 'runCode',
+        code: text
+    });
+}
+
+function addRunButtons()
+{
+    const blocks = document.querySelectorAll('pre');
+
+    blocks.forEach(pre => {
+        if (pre.dataset.runAttached === '1')
+            return;
+
+        pre.dataset.runAttached = '1';
+
+        const btn = document.createElement('button');
+        btn.className = 'run-btn';
+        btn.textContent = 'Run';
+
+        btn.onclick = function(e)
+        {
+            e.preventDefault();
+            e.stopPropagation();
+            sendCode(getCodeText(pre));
+        };
+
+        pre.appendChild(btn);
+    });
+}
+
+function slugify(text)
+{
+    return (text || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+}
+
+function nextElementSiblingOf(node)
+{
+    let n = node.nextSibling;
+
+    while (n)
+    {
+        if (n.nodeType === 1)
+            return n;
+
+        n = n.nextSibling;
+    }
+
+    return null;
+}
+
+function wrapHeadingWithNextBlock(container, selector)
+{
+    const headings = Array.from(container.querySelectorAll(selector));
+
+    headings.forEach(h => {
+        if (!h.parentElement || h.parentElement.classList.contains('heading-block'))
+            return;
+
+        const next = nextElementSiblingOf(h);
+        if (!next)
+            return;
+
+        if (next.classList && next.classList.contains('heading-block'))
+            return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'heading-block';
+
+        h.parentNode.insertBefore(wrapper, h);
+        wrapper.appendChild(h);
+        wrapper.appendChild(next);
+    });
+}
+
+function isShortContextBlock(node)
+{
+    if (!node || node.nodeType !== 1)
+        return false;
+
+    if (!node.matches('p, h1, h2, h3, h4, h5, h6'))
+        return false;
+
+    const text = (node.textContent || '').trim();
+    return text.length > 0 && text.length <= 280;
+}
+
+function buildImageBlocks(container)
+{
+    const images = Array.from(container.querySelectorAll('img'));
+
+    images.forEach(img => {
+        if (img.closest('pre, code, .image-block'))
+            return;
+
+        let anchor = img.closest('figure');
+        if (!anchor)
+            anchor = img.closest('p');
+        if (!anchor)
+            anchor = img;
+
+        if (!anchor.parentElement)
+            return;
+
+        const previous = anchor.previousElementSibling;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-block';
+
+        if (isShortContextBlock(previous))
+        {
+            wrapper.classList.add('with-context');
+            wrapper.appendChild(previous);
+        }
+
+        let figure;
+        if (anchor.tagName === 'FIGURE')
+        {
+            figure = anchor;
+        }
+        else
+        {
+            figure = document.createElement('figure');
+            anchor.parentNode.insertBefore(wrapper, anchor);
+            wrapper.appendChild(figure);
+            figure.appendChild(anchor);
+            return;
+        }
+
+        anchor.parentNode.insertBefore(wrapper, anchor);
+        wrapper.appendChild(figure);
+    });
+}
+
+function buildSectionBlocks(contentNodes)
+{
+    const content = document.createElement('section');
+    content.className = 'content';
+
+    let currentSection = null;
+
+    contentNodes.forEach(node => {
+        if (node.nodeType !== 1)
+        {
+            if (currentSection)
+                currentSection.appendChild(node.cloneNode(true));
+            else
+                content.appendChild(node.cloneNode(true));
+            return;
+        }
+
+        const tag = node.tagName;
+
+        if (tag === 'H2')
+        {
+            currentSection = document.createElement('section');
+            currentSection.className = 'section-block';
+            currentSection.appendChild(node.cloneNode(true));
+            content.appendChild(currentSection);
+        }
+        else
+        {
+            if (currentSection)
+                currentSection.appendChild(node.cloneNode(true));
+            else
+                content.appendChild(node.cloneNode(true));
+        }
+    });
+
+    wrapHeadingWithNextBlock(content, 'h2');
+    wrapHeadingWithNextBlock(content, 'h3');
+
+    return content;
+}
+
+function buildStructuredDocument()
+{
+    const source = document.getElementById('source-content');
+    const root = document.getElementById('print-root');
+
+    const nodes = Array.from(source.childNodes);
+
+    let coverNodes = [];
+    let contentNodes = [];
+    let foundFirstH2 = false;
+
+    nodes.forEach(n => {
+        if (!foundFirstH2 && n.nodeType === 1 && n.tagName === 'H2')
+        {
+            foundFirstH2 = true;
+            contentNodes.push(n);
+        }
+        else if (!foundFirstH2)
+        {
+            coverNodes.push(n);
+        }
+        else
+        {
+            contentNodes.push(n);
+        }
+    });
+
+    const cover = document.createElement('section');
+    cover.className = 'cover';
+    coverNodes.forEach(n => cover.appendChild(n.cloneNode(true)));
+
+    const content = buildSectionBlocks(contentNodes);
+    buildImageBlocks(content);
+
+    const headings = content.querySelectorAll('h2, h3, h4');
+
+    const usedIds = new Set();
+
+    headings.forEach(h => {
+        let baseId = slugify(h.textContent);
+        if (!baseId) baseId = 'secao';
+
+        let finalId = baseId;
+        let i = 2;
+
+        while (usedIds.has(finalId))
+        {
+            finalId = baseId + '-' + i;
+            i++;
+        }
+
+        usedIds.add(finalId);
+        h.id = finalId;
+    });
+
+    const toc = document.createElement('section');
+    toc.className = 'toc';
+
+    const tocTitle = document.createElement('h2');
+    tocTitle.textContent = 'Índice';
+    toc.appendChild(tocTitle);
+
+    const ul = document.createElement('ul');
+
+    headings.forEach(h => {
+        const li = document.createElement('li');
+        li.className = h.tagName.toLowerCase();
+
+        const a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+
+        li.appendChild(a);
+        ul.appendChild(li);
+    });
+
+    toc.appendChild(ul);
+
+    root.innerHTML = '';
+    root.appendChild(cover);
+    root.appendChild(toc);
+    root.appendChild(content);
+}
+
+document.addEventListener('DOMContentLoaded', function()
+{
+    buildStructuredDocument();
+    addRunButtons();
+});
+
+document.addEventListener('contextmenu', function(e)
+{
+    const pre = e.target.closest('pre');
+    if (!pre) return;
+
+    e.preventDefault();
+
+    let text = window.getSelection().toString();
+
+    if (!text.trim())
+        text = getCodeText(pre);
+
+    sendCode(text);
+});
+
+document.addEventListener('dblclick', function(e)
+{
+    const pre = e.target.closest('pre');
+    if (!pre) return;
+
+    sendCode(getCodeText(pre));
+});
+</script>
+</head>
+
+<body>
+<div id="source-content" style="display:none;">
+<h1 id="vegetal-feelings">Vegetal Feelings</h1>
+<div class="image-block">
+  <p></p>
+  <figure>
+    <img src="2026-04-21 Atividade 2_screencap_20260422_172228.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
+    <figcaption></figcaption>
+  </figure>
+</div>
+<div class="image-block">
+  <p></p>
+  <figure>
+    <img src="2026-04-21 Atividade 2_screencap_20260422_174152.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
+    <figcaption></figcaption>
+  </figure>
+</div>
+<p>Vegetal Feelings
+Introduction</p>
+<p>In this activity, an initial exploration of Internet of Things (IoT) platforms was carried out, aiming to understand the operation of sensors, actuators, and microcontrollers, as well as their integration into automation systems.</p>
+<p>In addition to the theoretical component, the implementation of a practical system based on an ESP32 microcontroller was also initiated, with integration into the Home Assistant platform, allowing remote monitoring and control of devices.</p>
+<div class="image-block"> <figure> <img src="2026-04-21 Atividade 2_screencap_20260421_180938.png" style="max-width: 90%; max-height: 180mm;"> <figcaption>Work environment and initial configuration</figcaption> </figure> </div>
+First ESPHome configuration
+<p>To configure the microcontroller, ESPHome was used, which allows creating firmware in a simplified manner and integrating it directly with Home Assistant.</p>
+<p>The process began by running the configuration wizard:</p>
+<p>python -m esphome wizard motion-c3.yaml</p>
+<p>This wizard allowed defining:</p>
+<ul>
+<li>Device name</li>
+<li>Microcontroller type (ESP32)</li>
+<li>Wi-Fi network</li>
+<li>Encryption key for communication with Home Assistant</li>
+</ul>
+<div class="image-block"> <figure> <img src="2026-04-21 Atividade 2_screencap_20260421_230915.png" style="max-width: 90%; max-height: 180mm;"> <figcaption>ESPHome configuration wizard</figcaption> </figure> </div>
+<p>After configuration, the firmware was compiled and sent to the device using the following command:</p>
+<p>python -m esphome run motion-c3.yaml</p>
+<p>This process includes:</p>
+<ul>
+<li>Firmware compilation</li>
+<li>Upload via USB or OTA (Over-The-Air)</li>
+<li>Real-time monitoring through logs</li>
+</ul>
+<p>Xiao Grove</p>
+<p>To facilitate the connection of sensors and actuators, the Grove Expansion Board module was used for the XIAO ESP32-S3 microcontroller.</p>
+<p>This module allows a simpler and more organized connection, providing ports already prepared for:</p>
+<ul>
+<li>analog signals</li>
+<li>digital signals</li>
+<li>I2C communication</li>
+<li>UART communication</li>
+</ul>
+<div class="image-block"> <figure> <img src="2026-04-21 Atividade 2_screencap_20260421_180902.png" style="max-width: 90%; max-height: 180mm;"> <figcaption>XIAO ESP32-S3 board with Grove Expansion Board</figcaption> </figure> </div>
+Port Mapping
+<p>The following table shows the correspondence between the Grove breakout ports and the XIAO ESP32-S3 GPIOs, which is essential for the correct connection of components.</p>
+<table>
+<thead>
+<tr>
+<th>Port on breakout</th>
+<th>Function on breakout</th>
+<th style="text-align: right;">GPIO on XIAO ESP32-S3</th>
+<th>Observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A0 / D0</td>
+<td>analog or digital</td>
+<td style="text-align: right;">GPIO1</td>
+<td>good for analog sensor</td>
+</tr>
+<tr>
+<td>A1 / D1</td>
+<td>analog or digital</td>
+<td style="text-align: right;">GPIO2</td>
+<td>already used for the light relay</td>
+</tr>
+<tr>
+<td>A2 / D2</td>
+<td>analog or digital</td>
+<td style="text-align: right;">GPIO3</td>
+<td>free</td>
+</tr>
+<tr>
+<td>I2C</td>
+<td>SDA/SCL</td>
+<td style="text-align: right;">GPIO4 / GPIO5</td>
+<td>I2C bus</td>
+</tr>
+<tr>
+<td>A5 / D5</td>
+<td>analog or digital</td>
+<td style="text-align: right;">GPIO6</td>
+<td>free</td>
+</tr>
+<tr>
+<td>A7 / D7</td>
+<td>analog/digital or UART</td>
+<td style="text-align: right;">GPIO44</td>
+<td>caution with serial use</td>
+</tr>
+<tr>
+<td>A8 / D8</td>
+<td>analog or digital</td>
+<td style="text-align: right;">GPIO7</td>
+<td>free</td>
+</tr>
+<tr>
+<td>A9 / D9</td>
+<td>analog or digital</td>
+<td style="text-align: right;">GPIO8</td>
+<td>free</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Pin XIAO</th>
+<th style="text-align: right;">GPIO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D0 / A0</td>
+<td style="text-align: right;">GPIO1</td>
+</tr>
+<tr>
+<td>D1 / A1</td>
+<td style="text-align: right;">GPIO2</td>
+</tr>
+<tr>
+<td>D2 / A2</td>
+<td style="text-align: right;">GPIO3</td>
+</tr>
+<tr>
+<td>D3 / A3</td>
+<td style="text-align: right;">GPIO4</td>
+</tr>
+<tr>
+<td>D4 / A4</td>
+<td style="text-align: right;">GPIO5</td>
+</tr>
+<tr>
+<td>D5 / A5</td>
+<td style="text-align: right;">GPIO6</td>
+</tr>
+<tr>
+<td>D6 / A6</td>
+<td style="text-align: right;">GPIO43</td>
+</tr>
+<tr>
+<td>D7 / A7</td>
+<td style="text-align: right;">GPIO44</td>
+</tr>
+<tr>
+<td>D8 / A8</td>
+<td style="text-align: right;">GPIO7</td>
+</tr>
+<tr>
+<td>D9 / A9</td>
+<td style="text-align: right;">GPIO8</td>
+</tr>
+<tr>
+<td>D10 / A10</td>
+<td style="text-align: right;">GPIO9</td>
+</tr>
+</tbody>
+</table>
+<h3 id="iot-simulation-platform">IoT Simulation Platform</h3>
+<p>Available components</p>
+<p>The simulation platform used provides a wide range of typical IoT system components, allowing the creation of virtual circuits interactively.</p>
+<p>Among the main components available are:</p>
+<ul>
+<li>Microcontrollers (Arduino, ESP32)</li>
+<li>Sensors (temperature, luminosity, distance, motion)</li>
+<li>Actuators (LEDs, relays, motors)</li>
+<li>Auxiliary components (resistors, breadboard, wiring)</li>
+</ul>
+<p>These elements allow simulating real scenarios of data acquisition and device control.</p>
+<h3 id="circuit-construction">Circuit construction</h3>
+<p>Circuits are built through a graphical interface, where components can be selected, positioned, and interconnected by virtual connections (wires).</p>
+<p>The connection between components is done intuitively, respecting the basic principles of electronics, such as:</p>
+<ul>
+<li>power supply (VCC and GND)</li>
+<li>signal connections</li>
+<li>use of resistors when necessary</li>
+</ul>
+<p>This approach allows validating the circuit's operation before physical implementation.</p>
+<h3 id="programming-area">Programming area</h3>
+<p>Programming is done directly on the platform, through an integrated code editor.</p>
+<p>In most cases, a C/C++ based language (Arduino) is used, allowing:</p>
+<ul>
+<li>sensor reading</li>
+<li>actuator control</li>
+<li>implementation of conditional logic</li>
+</ul>
+<p>The code can be changed in real time, facilitating experimentation and learning.</p>
+<h3 id="results-visualization">Results visualization</h3>
+<p>Results are visualized in real time during simulation, allowing observation of the system's behavior.</p>
+<p>Examples of visualization include:</p>
+<ul>
+<li>LEDs turning on and off</li>
+<li>dynamically updated sensor values</li>
+<li>activation of motors or relays</li>
+</ul>
+<p>This functionality allows validating the system's behavior without the need for physical hardware.</p>
+<h2 id="practical-implementation">Practical Implementation</h2>
+<h2 id="hardware-used">Hardware used</h2>
+<p>For the practical implementation of the IoT system, the following components were used:</p>
+<ul>
+<li>XIAO ESP32-S3 Sense</li>
+<li>Grove Expansion Board</li>
+<li>Grove Relay</li>
+<li>Temperature sensor (Grove)</li>
+<li>Luminosity sensor (Grove)</li>
+<li>Soil moisture sensor</li>
+</ul>
+<hr />
+<h2 id="integration-with-home-assistant">Integration with Home Assistant</h2>
+<p>The system integration was carried out using ESPHome, allowing direct communication between the ESP32 microcontroller and Home Assistant.</p>
+<p>This approach enables:</p>
+<ul>
+<li>real-time sensor monitoring</li>
+<li>remote device control</li>
+<li>creation of automations</li>
+</ul>
+<p>ESPHome simplifies firmware configuration, allowing sensors and actuators to be defined through YAML files.</p>
+<hr />
+<h2 id="actuator-control">Actuator control</h2>
+<p>Relay control was implemented, used to turn external devices on and off, namely the lighting system.</p>
+<p>Control is performed through Home Assistant, allowing:</p>
+<ul>
+<li>manual activation</li>
+<li>future automation based on environmental conditions</li>
+</ul>
+<hr />
+<h2 id="sensor-reading">Sensor reading</h2>
+<p>Sensors were implemented to collect environmental data, allowing monitoring of greenhouse conditions.</p>
+<p>The main collected data includes:</p>
+<ul>
+<li>temperature</li>
+<li>luminosity</li>
+</ul>
+<p>The values are sent in real time to Home Assistant, where they can be viewed and used in automations.</p>
+<hr />
+<h2 id="future-development">Future development</h2>
+<p>The system will be evolved into a smart mini-greenhouse, called &quot;Vegetal Feelings&quot;, with the following features:</p>
+<ul>
+<li>Automatic lighting control</li>
+<li>Automatic irrigation system</li>
+<li>Soil moisture monitoring</li>
+<li>Ventilation control</li>
+<li>Image capture via camera</li>
+<li>Automatic email sending of images</li>
+</ul>
+<hr />
+<h2 id="ota-updates-over-the-air">OTA Updates (Over-The-Air)</h2>
+<p>ESPHome allows remote firmware update via Wi-Fi network, without the need for physical connection to the device.</p>
+<p>This feature facilitates:</p>
+<ul>
+<li>error correction</li>
+<li>addition of new features</li>
+<li>system maintenance</li>
+</ul>
+<div class="image-block">
+  <figure>
+    <img src="2026-04-21 Atividade 2_screencap_20260421_182820.png" style="max-width: 90%; max-height: 180mm;">
+    <figcaption>OTA update through ESPHome</figcaption>
+  </figure>
+</div>
+<hr />
+<h2 id="conclusion">Conclusion</h2>
+<p>The activity allowed understanding the fundamental principles of the Internet of Things, namely the integration between sensors, actuators, and management platforms.</p>
+<p>It was possible to develop a functional system based on ESP32, with remote monitoring and control capability through Home Assistant.</p>
+<p>The project has expansion potential, and can evolve into a complete small-scale agricultural automation solution.</p>
+
+</div>
+
+<div id="print-root"></div>
+</body>
+</html>
