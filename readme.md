@@ -3,10 +3,12 @@
 <div class="image-block">
   <p></p>
   <figure>
-    <img src="2026-04-21 Atividade 2_screencap_20260422_172228.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
+    <img src="readme_screencap_20260423_231237.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
     <figcaption></figcaption>
   </figure>
 </div>
+
+
 
 <div class="image-block">
   <p></p>
@@ -198,7 +200,17 @@ The main collected data includes:
 
 The values are sent in real time to Home Assistant, where they can be viewed and used in automations.
 
----
+## Power Management
+
+As the Xiao works with 3,3V and we need, do power the Leds with 12V and the water motor wiht 5V, we used relays, to cupply the needed current\voltage.
+
+<div class="image-block">
+  <p></p>
+  <figure>
+    <img src="readme_screencap_20260423_231526.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
+    <figcaption></figcaption>
+  </figure>
+</div>
 
 ## Future development
 
@@ -229,6 +241,84 @@ This feature facilitates:
   </figure>
 </div>
 
+
+## The code
+
+```
+esphome:
+  name: estufa-xiao
+  platformio_options:
+    build_flags:
+      - -DIDF_GIT_VER_OVERRIDE="v5.5.4"
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+logger:
+
+api:
+  encryption:
+    key: "wYmECWZutp4UXSJTcX7vwX1WCa5WI7W/I3jOqVukzoE="
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: "ssid"
+  password: "password*"
+
+  ap:
+    ssid: "Fallback Hotspot"
+    password: "hbLR4MnANkQo"
+
+switch:
+  - platform: gpio
+    id: relay_luz
+    name: "Relay Teste"
+    pin: GPIO2
+
+sensor:
+  - platform: adc
+    pin: GPIO1
+    name: "Temperatura NTC"
+    update_interval: 5s
+    attenuation: 12db
+    filters:
+      - lambda: |-
+          float voltage = x;
+          if (voltage <= 0.0 || voltage >= 3.3) return NAN;
+          float resistance = (3.3 - voltage) * 10000.0 / voltage;
+          float temperature = 1.0 / (log(resistance / 10000.0) / 3975.0 + 1.0 / 298.15) - 273.15;
+          return temperature;
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+
+  - platform: adc
+    id: sensor_luz
+    pin: GPIO3
+    name: "Luminosidade"
+    update_interval: 5s
+    attenuation: 12db
+    unit_of_measurement: "V"
+    accuracy_decimals: 2
+
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(sensor_luz).state < 0.3;'
+          then:
+            - switch.turn_on: relay_luz
+          else:
+            - switch.turn_off: relay_luz
+
+captive_portal:
+```
+
+
 ---
 
 ## Conclusion
@@ -238,3 +328,13 @@ The activity allowed understanding the fundamental principles of the Internet of
 It was possible to develop a functional system based on ESP32, with remote monitoring and control capability through Home Assistant.
 
 The project has expansion potential, and can evolve into a complete small-scale agricultural automation solution.
+
+
+## Reference:
+### initialize Git in the framework directory:
+cd C:\Users\CarlosManuelOliveira\.platformio\packages\framework-espidf
+git init
+git add .
+git commit -m "Initial commit"
+
+python -m esphome run estufa.yaml --device 10.0.10.159

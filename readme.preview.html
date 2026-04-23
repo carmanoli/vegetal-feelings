@@ -498,7 +498,7 @@ document.addEventListener('dblclick', function(e)
 <div class="image-block">
   <p></p>
   <figure>
-    <img src="2026-04-21 Atividade 2_screencap_20260422_172228.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
+    <img src="readme_screencap_20260423_231237.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
     <figcaption></figcaption>
   </figure>
 </div>
@@ -736,7 +736,15 @@ Port Mapping
 <li>luminosity</li>
 </ul>
 <p>The values are sent in real time to Home Assistant, where they can be viewed and used in automations.</p>
-<hr />
+<h2 id="power-management">Power Management</h2>
+<p>As the Xiao works with 3,3V and we need, do power the Leds with 12V and the water motor wiht 5V, we used relays, to cupply the needed current\voltage.</p>
+<div class="image-block">
+  <p></p>
+  <figure>
+    <img src="readme_screencap_20260423_231526.png" alt="" style="max-width: 90%; max-height: 180mm; width: auto; height: auto;">
+    <figcaption></figcaption>
+  </figure>
+</div>
 <h2 id="future-development">Future development</h2>
 <p>The system will be evolved into a smart mini-greenhouse, called &quot;Vegetal Feelings&quot;, with the following features:</p>
 <ul>
@@ -762,11 +770,91 @@ Port Mapping
     <figcaption>OTA update through ESPHome</figcaption>
   </figure>
 </div>
+<h2 id="the-code">The code</h2>
+<pre><code>esphome:
+  name: estufa-xiao
+  platformio_options:
+    build_flags:
+      - -DIDF_GIT_VER_OVERRIDE=&quot;v5.5.4&quot;
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+logger:
+
+api:
+  encryption:
+    key: &quot;wYmECWZutp4UXSJTcX7vwX1WCa5WI7W/I3jOqVukzoE=&quot;
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: &quot;ssid&quot;
+  password: &quot;password*&quot;
+
+  ap:
+    ssid: &quot;Fallback Hotspot&quot;
+    password: &quot;hbLR4MnANkQo&quot;
+
+switch:
+  - platform: gpio
+    id: relay_luz
+    name: &quot;Relay Teste&quot;
+    pin: GPIO2
+
+sensor:
+  - platform: adc
+    pin: GPIO1
+    name: &quot;Temperatura NTC&quot;
+    update_interval: 5s
+    attenuation: 12db
+    filters:
+      - lambda: |-
+          float voltage = x;
+          if (voltage &lt;= 0.0 || voltage &gt;= 3.3) return NAN;
+          float resistance = (3.3 - voltage) * 10000.0 / voltage;
+          float temperature = 1.0 / (log(resistance / 10000.0) / 3975.0 + 1.0 / 298.15) - 273.15;
+          return temperature;
+    unit_of_measurement: &quot;°C&quot;
+    accuracy_decimals: 1
+
+  - platform: adc
+    id: sensor_luz
+    pin: GPIO3
+    name: &quot;Luminosidade&quot;
+    update_interval: 5s
+    attenuation: 12db
+    unit_of_measurement: &quot;V&quot;
+    accuracy_decimals: 2
+
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(sensor_luz).state &lt; 0.3;'
+          then:
+            - switch.turn_on: relay_luz
+          else:
+            - switch.turn_off: relay_luz
+
+captive_portal:
+</code></pre>
 <hr />
 <h2 id="conclusion">Conclusion</h2>
 <p>The activity allowed understanding the fundamental principles of the Internet of Things, namely the integration between sensors, actuators, and management platforms.</p>
 <p>It was possible to develop a functional system based on ESP32, with remote monitoring and control capability through Home Assistant.</p>
 <p>The project has expansion potential, and can evolve into a complete small-scale agricultural automation solution.</p>
+<h2 id="reference">Reference:</h2>
+<h3 id="initialize-git-in-the-framework-directory">initialize Git in the framework directory:</h3>
+<p>cd C:\Users\CarlosManuelOliveira.platformio\packages\framework-espidf
+git init
+git add .
+git commit -m &quot;Initial commit&quot;</p>
+<p>python -m esphome run estufa.yaml --device 10.0.10.159</p>
 
 </div>
 
